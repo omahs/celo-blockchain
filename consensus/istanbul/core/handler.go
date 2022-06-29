@@ -27,6 +27,7 @@ import (
 
 // Start implements core.Engine.Start
 func (c *core) Start() error {
+	println("-----opening rsdb at ", c.config.RoundStateDBPath)
 	rsdb, err := newRoundStateDB(c.config.RoundStateDBPath, nil)
 	if err != nil {
 		log.Crit("Failed to open RoundStateDB", "err", err)
@@ -67,11 +68,11 @@ func (c *core) Stop() error {
 	// Make sure the handler goroutine exits
 	c.handlerWg.Wait()
 
-	err := c.rsdb.Close()
+	// err := c.rsdb.Close()
 	c.currentMu.Lock()
 	defer c.currentMu.Unlock()
 	c.current = nil
-	return err
+	return nil
 }
 
 // ----------------------------------------------------------------------------
@@ -112,6 +113,7 @@ func (c *core) handleEvents() {
 			if !ok {
 				return
 			}
+			// println(c.address.String()[2:5], "event")
 			// A real event arrived, process interesting content
 			switch ev := event.Data.(type) {
 			case istanbul.RequestEvent:
@@ -139,6 +141,7 @@ func (c *core) handleEvents() {
 			if !ok {
 				return
 			}
+			println(c.address.String()[2:5], "timeout")
 			switch ev := event.Data.(type) {
 			case timeoutAndMoveToNextRoundEvent:
 				if err := c.handleTimeoutAndMoveToNextRound(ev.view); err != nil {
@@ -153,6 +156,7 @@ func (c *core) handleEvents() {
 			if !ok {
 				return
 			}
+			println(c.address.String()[2:5], "finalCommitted")
 			switch event.Data.(type) {
 			case istanbul.FinalCommittedEvent:
 				if err := c.handleFinalCommitted(); err != nil {

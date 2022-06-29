@@ -43,6 +43,9 @@ func (vg *vcGossiper) GossipAllFrom(vcDb *VersionCertificateDB) error {
 
 func (vg *vcGossiper) Gossip(versionCertificates []*istanbul.VersionCertificate) error {
 	logger := vg.logger.New("func", "Gossip")
+	for _, c := range versionCertificates {
+		println("gossiping version certs ", c.Address().String()[2:5], c.Version)
+	}
 	payload, err := istanbul.NewVersionCeritifcatesMessage(versionCertificates, common.Address{}).Payload()
 	if err != nil {
 		logger.Warn("Error encoding version certificate msg", "err", err)

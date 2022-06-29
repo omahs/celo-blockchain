@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"runtime/debug"
 	"sort"
 	"sync"
 	"sync/atomic"
@@ -431,6 +432,7 @@ func (srv *Server) AddPeer(node *enode.Node, purpose PurposeFlag) {
 
 // RemovePeer disconnects from the given node
 func (srv *Server) RemovePeer(node *enode.Node, purpose PurposeFlag) {
+	debug.PrintStack()
 	done := make(chan struct{})
 	select {
 	case srv.removestatic <- removestaticArgs{nodeArgs: &nodeArgs{node: node, purpose: purpose}, done: done}:

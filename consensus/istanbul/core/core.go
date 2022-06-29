@@ -151,7 +151,6 @@ type core struct {
 
 // New creates an Istanbul consensus core
 func New(backend CoreBackend, config *istanbul.Config) Engine {
-
 	c := &core{
 		config:                    config,
 		address:                   backend.Address(),
@@ -169,6 +168,13 @@ func New(backend CoreBackend, config *istanbul.Config) Engine {
 		handlePrepareTimer:        metrics.NewRegisteredTimer("consensus/istanbul/core/handle_prepare", nil),
 		handleCommitTimer:         metrics.NewRegisteredTimer("consensus/istanbul/core/handle_commit", nil),
 	}
+
+	// rsdb, err := newRoundStateDB(c.config.RoundStateDBPath, nil)
+	// if err != nil {
+	// 	log.Crit("Failed to open RoundStateDB", "err", err)
+	// }
+	// c.rsdb = rsdb
+
 	msgBacklog := newMsgBacklog(
 		func(msg *istanbul.Message) {
 			c.sendEvent(backlogEvent{
@@ -536,6 +542,7 @@ func (c *core) startNewSequence() error {
 		Sequence: new(big.Int).Add(headBlock.Number(), common.Big1),
 		Round:    new(big.Int).Set(common.Big0),
 	}
+	println(c.address.String()[2:5], "starting block", newView.Sequence.String())
 	valSet := c.backend.Validators(headBlock)
 	c.roundChangeSet = newRoundChangeSet(valSet)
 

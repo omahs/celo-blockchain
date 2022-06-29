@@ -86,6 +86,7 @@ func (sb *Backend) Gossip(payload []byte, ethMsgCode uint64) error {
 	// Get all connected peers
 	peersToSendMsg := sb.broadcaster.FindPeers(nil, p2p.AnyPurpose)
 
+	println(sb.Address().String()[2:5], "broadcasting to", len(peersToSendMsg))
 	// Mark that this node gossiped/processed this message, so that it will ignore it if
 	// one of it's peers sends the message to it.
 	sb.gossipCache.MarkMessageProcessedBySelf(payload)

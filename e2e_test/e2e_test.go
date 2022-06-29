@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -24,10 +25,10 @@ func init() {
 	// This statement is commented out but left here since its very useful for
 	// debugging problems and its non trivial to construct.
 	//
-	// log.Root().SetHandler(log.LvlFilterHandler(log.LvlTrace, log.StreamHandler(os.Stdout, log.TerminalFormat(true))))
+	log.Root().SetHandler(log.LvlFilterHandler(log.LvlError, log.StreamHandler(os.Stdout, log.TerminalFormat(true))))
 
 	// This disables all logging which in general we want, because there is a lot
-	log.Root().SetHandler(log.DiscardHandler())
+	// log.Root().SetHandler(log.DiscardHandler())
 }
 
 // This test starts a network submits a transaction and waits for the whole
@@ -129,7 +130,7 @@ func TestStartStopValidators(t *testing.T) {
 		}
 	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*40)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10000)
 	defer cancel()
 
 	var txs []*types.Transaction
@@ -145,6 +146,7 @@ func TestStartStopValidators(t *testing.T) {
 	err = network.AwaitTransactions(ctx, txs...)
 	require.NoError(t, err)
 
+	println("-------received first tx")
 	// Stop one node, the rest of the network should still be able to progress
 	err = network[3].Close()
 	require.NoError(t, err)
@@ -157,6 +159,7 @@ func TestStartStopValidators(t *testing.T) {
 	// Check that the remaining network can still process this transction.
 	err = network[:3].AwaitTransactions(ctx, txs...)
 	require.NoError(t, err)
+	println("-------received second tx")
 
 	// Stop another node, the network should now be stuck
 	err = network[2].Close()
@@ -178,11 +181,13 @@ func TestStartStopValidators(t *testing.T) {
 		t.Fatalf("expecting %q, instead got: %v ", context.DeadlineExceeded.Error(), err)
 	}
 
+	println("-------starting node 2")
 	// Start the last stopped node
 	err = network[2].Start()
 	require.NoError(t, err)
 
 	// Connect last stopped node to running nodes
+	time.Sleep(250 * time.Millisecond)
 	network[2].AddPeers(network[:2]...)
 	time.Sleep(25 * time.Millisecond)
 	for _, n := range network[:3] {
@@ -193,6 +198,7 @@ func TestStartStopValidators(t *testing.T) {
 	// Check that the  network now processes the previous transaction.
 	err = network[:3].AwaitTransactions(ctx, txs...)
 	require.NoError(t, err)
+	println("-------received third tx")
 
 	// Check that the network now quickly processes incoming transactions.
 	// Send one celo from external account 0 to 1 via node 0.
@@ -202,12 +208,15 @@ func TestStartStopValidators(t *testing.T) {
 
 	err = network[:3].AwaitTransactions(ctx, txs...)
 	require.NoError(t, err)
+	println("-------received fourth tx")
 
+	println("-------starting node 3")
 	// Start the first stopped node
 	err = network[3].Start()
 	require.NoError(t, err)
 
 	// Connect final node to rest of network
+	time.Sleep(250 * time.Millisecond)
 	network[3].AddPeers(network[:3]...)
 	time.Sleep(25 * time.Millisecond)
 	for _, n := range network {
@@ -221,8 +230,24 @@ func TestStartStopValidators(t *testing.T) {
 	require.NoError(t, err)
 	txs = append(txs, tx)
 
-	err = network.AwaitTransactions(ctx, txs...)
+	err = network[3].AwaitTransactions(ctx, txs...)
 	require.NoError(t, err)
+	println("3 got tx")
+	err = network[2].AwaitTransactions(ctx, txs...)
+	require.NoError(t, err)
+	println("2 got tx")
+	err = network[1].AwaitTransactions(ctx, txs...)
+	require.NoError(t, err)
+	println("1 got tx")
+	err = network[0].AwaitTransactions(ctx, txs...)
+	require.NoError(t, err)
+	println("0 got tx")
+
+	// err = network.AwaitTransactions(ctx, txs...)
+	// require.NoError(t, err)
+
+	println("received fifth tx")
+	// time.Sleep(40 * time.Second)
 
 }
 
