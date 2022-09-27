@@ -529,8 +529,10 @@ func (q *queue) reserveHeaders(p *peerConnection, count int, taskPool map[common
 		}
 		// Only required if the reserve is for a body type
 		if kind == bodyType {
+			q.resultCache.lock.Lock()
 			// All headers must be fetched so that the random beacon can be updated correctly.
 			item.pending |= (1 << bodyType)
+			q.resultCache.lock.Unlock()
 		}
 		if item.Done(kind) {
 			// If it's a noop, we can skip this task
