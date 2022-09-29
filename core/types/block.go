@@ -52,6 +52,10 @@ type Header struct {
 	GasUsed     uint64         `json:"gasUsed"          gencodec:"required"`
 	Time        uint64         `json:"timestamp"        gencodec:"required"`
 	Extra       []byte         `json:"extraData"        gencodec:"required"`
+
+	// Used to cache deserialized istanbul extra data
+	// TODO: Do we need other adaptions when adding this?
+	deserializedExtra *IstanbulExtra
 }
 
 // field type overrides for gencodec
@@ -100,6 +104,10 @@ func (h *Header) SanityCheck() error {
 // EmptyBody returns true if there is no additional 'body' to complete the header
 // that is: no transactions.
 func (h *Header) EmptyBody() bool {
+	if h.IsIstanbulHeader() {
+		return false
+	}
+
 	return h.TxHash == EmptyRootHash
 }
 
