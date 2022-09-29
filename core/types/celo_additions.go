@@ -1,18 +1,13 @@
 package types
 
-func (h *Header) IsIstanbulHeader() bool {
+func (h *Header) IstanbulExtra() (*IstanbulExtra, error) {
 	if h.deserializedExtra == nil {
-		// TODO: Should we also cache if deserialisation fails?
 		extra, err := ExtractIstanbulExtra(h)
 		if err != nil {
-			return false
+			return nil, err
 		}
 		h.deserializedExtra = extra
 	}
 
-	// FIXME: Add proper signature check
-	if h.deserializedExtra != nil && h.deserializedExtra.Seal != nil {
-		return true
-	}
-	return false
+	return h.deserializedExtra, nil
 }

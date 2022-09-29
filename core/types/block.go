@@ -54,7 +54,6 @@ type Header struct {
 	Extra       []byte         `json:"extraData"        gencodec:"required"`
 
 	// Used to cache deserialized istanbul extra data
-	// TODO: Do we need other adaptions when adding this?
 	deserializedExtra *IstanbulExtra
 }
 
@@ -104,7 +103,7 @@ func (h *Header) SanityCheck() error {
 // EmptyBody returns true if there is no additional 'body' to complete the header
 // that is: no transactions.
 func (h *Header) EmptyBody() bool {
-	if h.IsIstanbulHeader() {
+	if extra, err := h.IstanbulExtra(); err == nil && extra != nil {
 		return false
 	}
 
@@ -287,6 +286,7 @@ func CopyHeader(h *Header) *Header {
 		cpy.Extra = make([]byte, len(h.Extra))
 		copy(cpy.Extra, h.Extra)
 	}
+	cpy.deserializedExtra = nil
 	return &cpy
 }
 
