@@ -23,6 +23,7 @@ import (
 	"io"
 	"math/big"
 	"reflect"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -54,6 +55,7 @@ type Header struct {
 	Extra       []byte         `json:"extraData"        gencodec:"required"`
 
 	// Used to cache deserialized istanbul extra data
+	extraLock         sync.RWMutex
 	deserializedExtra *IstanbulExtra
 }
 
@@ -278,15 +280,25 @@ func NewBlockWithHeader(header *Header) *Block {
 // CopyHeader creates a deep copy of a block header to prevent side effects from
 // modifying a header variable.
 func CopyHeader(h *Header) *Header {
-	cpy := *h
-	if cpy.Number = new(big.Int); h.Number != nil {
+	cpy := Header{
+		ParentHash:  h.ParentHash,
+		Coinbase:    h.Coinbase,
+		Root:        h.Root,
+		TxHash:      h.TxHash,
+		ReceiptHash: h.ReceiptHash,
+		Bloom:       h.Bloom,
+		Number:      new(big.Int),
+		GasUsed:     h.GasUsed,
+		Time:        h.Time,
+	}
+
+	if h.Number != nil {
 		cpy.Number.Set(h.Number)
 	}
 	if len(h.Extra) > 0 {
 		cpy.Extra = make([]byte, len(h.Extra))
 		copy(cpy.Extra, h.Extra)
 	}
-	cpy.deserializedExtra = nil
 	return &cpy
 }
 
